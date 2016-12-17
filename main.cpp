@@ -38,11 +38,6 @@ int main(){
     
 
     
-    // Implement by you:
-
-    
-    
-    
     int TakenPrediction = 0; //can be 0(predict Not taken) or 1(predict taken)
     
     
@@ -75,11 +70,11 @@ int main(){
             saddr >> std::hex >> addr;
             accessaddr = bitset<32> (addr);
             
-            bitset<4> temIndex;
+            bitset<32> temIndex;
             long PredictIndex=0;
             int index=0;        //used for count the 4 LSBs
             
-            while (index!=4) {
+            while (index != M) {
                 temIndex[index] = accessaddr[index];
                 index+=1;
             }
@@ -95,7 +90,10 @@ int main(){
                 TakenPrediction = TAKEN;
             }
 
-
+            std::cout<<PredictIndex;
+            std::cout<<"\n";
+            std::cout<<accessaddr;
+            std::cout<<"\n";
             
             //saturating coutner modify
             if (TakenResult == "0")     //the TakenResult is 0 (not taken)
@@ -163,7 +161,6 @@ int main(){
     }
     else cout<< "Unable to open trace or traceout file ";
     
-
     std::cout<<(double)mis_number/line_number;      //output the result of mis-prediction rate
     
     return 0;
