@@ -61,8 +61,13 @@ int main(){
     unsigned int addr;  // the address from the memory trace store in unsigned int;
     bitset<32> accessaddr; // the address from the memory trace store in the bitset32;
     
+    long line_number=0; //used for calculate mis-prediction rate
+    long mis_number=0;
+    
     if (traces.is_open()&&tracesout.is_open()){
         while (getline (traces,line)){   // read mem access file and access Cache
+            
+            line_number+=1;     //count number of lines
             
             istringstream iss(line);
             if (!(iss >> xaddr >> TakenResult)) {break;}
@@ -98,21 +103,24 @@ int main(){
                 if (saturating_counter[PredictIndex] == 0){
                     //00
                     saturating_counter[PredictIndex] = 0;
+                    
                 }
                 
-                if (saturating_counter[PredictIndex] == 1){
+                else if (saturating_counter[PredictIndex] == 1){
                     //01
                     saturating_counter[PredictIndex] = 0;
                 }
                 
-                if (saturating_counter[PredictIndex] == 2){
+                else if (saturating_counter[PredictIndex] == 2){
                     //10
                     saturating_counter[PredictIndex] = 0;
+                    mis_number += 1;    //mis-prediction
                 }
                 
-                if (saturating_counter[PredictIndex] == 3){
+                else if (saturating_counter[PredictIndex] == 3){
                     //11
                     saturating_counter[PredictIndex] = 2;
+                    mis_number += 1;    //mis-prediction
                 }
                 
 
@@ -125,19 +133,21 @@ int main(){
                 if (saturating_counter[PredictIndex] == 0){
                     //00
                     saturating_counter[PredictIndex] = 1;
+                    mis_number += 1;    //mis-prediction
                 }
                 
-                if (saturating_counter[PredictIndex] == 1){
+                else if (saturating_counter[PredictIndex] == 1){
                     //01
                     saturating_counter[PredictIndex] = 3;
+                    mis_number += 1;    //mis-prediction
                 }
                 
-                if (saturating_counter[PredictIndex] == 2){
+                else if (saturating_counter[PredictIndex] == 2){
                     //10
                     saturating_counter[PredictIndex] = 3;
                 }
                 
-                if (saturating_counter[PredictIndex] == 3){
+                else if (saturating_counter[PredictIndex] == 3){
                     //11
                     saturating_counter[PredictIndex] = 3;
                 }
@@ -153,6 +163,8 @@ int main(){
     }
     else cout<< "Unable to open trace or traceout file ";
     
+
+    std::cout<<(double)mis_number/line_number;      //output the result of mis-prediction rate
     
     return 0;
 }
