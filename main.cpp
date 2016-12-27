@@ -10,23 +10,17 @@
 #include <bitset>
 
 using namespace std;
-//access state:
+
 #define TAKEN 1
 #define NOTTAKEN 0
 
 
-
-
-//int main(int argc, char* argv[]){
-int main(){
+int main(int argc, char* argv[]){
     
     int M=0;
     
-
-
     ifstream cache_params;
-    //cache_params.open(argv[1]);
-    cache_params.open("/Users/gpz/Desktop/Lab3/Lab3/config.txt");
+    cache_params.open(argv[1]);
 
     while(!cache_params.eof())  // read config file, get m
     {
@@ -44,59 +38,56 @@ int main(){
     ifstream traces;
     ofstream tracesout;
     string outname;
-    //outname = string(argv[2]) + ".out";
-    outname = "/Users/gpz/Desktop/Lab3/Lab3/traceout.txt";
-    //traces.open(argv[2]);
-    traces.open("/Users/gpz/Desktop/Lab3/Lab3/trace.txt");
+    outname = string(argv[2]) + ".out";
+    traces.open(argv[2]);
     tracesout.open(outname.c_str());
     
     string line;
-    string TakenResult;  // the result (Taken or Not Taken)
-    string xaddr;       // the address from the memory trace store in hex;
-    unsigned int addr;  // the address from the memory trace store in unsigned int;
-    bitset<32> accessaddr; // the address from the memory trace store in the bitset32;
+    string TakenResult;    // the result (Taken or Not Taken)
+    string xaddr;          // the address from the memory trace store in hex format
+    unsigned int addr;     // the address from the memory trace store in unsigned int
+    bitset<32> accessaddr; // the address from the memory trace store in the bitset<32>
     
-    long line_number=0; //used for calculate mis-prediction rate
-    long mis_number=0;
+    //long line_number=0; //used for calculate mis-prediction rate
+    //long mis_number=0;
     
     if (traces.is_open()&&tracesout.is_open()){
         while (getline (traces,line)){   // read mem access file and access Cache
             
-            line_number+=1;     //count number of lines
+            //line_number+=1;     //count the number of lines (to calculate the mis-prediction rate)
             
             istringstream iss(line);
             if (!(iss >> xaddr >> TakenResult)) {break;}
             stringstream saddr(xaddr);
             saddr >> std::hex >> addr;
-            accessaddr = bitset<32> (addr);
+            accessaddr = bitset<32> (addr);         //transform hex format to bitset<32>
             
-            bitset<32> temIndex;
-            long PredictIndex=0;
-            int index=0;        //used for count the 4 LSBs
+            bitset<32> temIndex;    //to save m bits LSBs
+            long PredictIndex=0;    //long int format index, used for locating saturating counter
+            int index=0;            //used for count the m bits LSBs
             
             while (index != M) {
                 temIndex[index] = accessaddr[index];
                 index+=1;
             }
             
-            PredictIndex = temIndex.to_ulong();
+            PredictIndex = temIndex.to_ulong();     //transfer bitset to long int format
 
-            //saturating counter reading, to get the prediction of current branch
+            //read saturating counter, to get the prediction of current branch
             if (saturating_counter[PredictIndex] == 0 or saturating_counter[PredictIndex] == 1){
+                //if saturating counter is 00 or 01
                 TakenPrediction = NOTTAKEN;
+                
             }
             
             if (saturating_counter[PredictIndex] == 2 or saturating_counter[PredictIndex] == 3){
+                //if saturating counter is 10 or 11
                 TakenPrediction = TAKEN;
             }
 
-            std::cout<<PredictIndex;
-            std::cout<<"\n";
-            std::cout<<accessaddr;
-            std::cout<<"\n";
             
-            //saturating coutner modify
-            if (TakenResult == "0")     //the TakenResult is 0 (not taken)
+            //modify saturating coutner
+            if (TakenResult == "0")     //if the TakenResult is 0 (not taken)
             {
                 if (saturating_counter[PredictIndex] == 0){
                     //00
@@ -112,32 +103,30 @@ int main(){
                 else if (saturating_counter[PredictIndex] == 2){
                     //10
                     saturating_counter[PredictIndex] = 0;
-                    mis_number += 1;    //mis-prediction
+                    //mis_number += 1;    //mis-prediction
                 }
                 
                 else if (saturating_counter[PredictIndex] == 3){
                     //11
                     saturating_counter[PredictIndex] = 2;
-                    mis_number += 1;    //mis-prediction
+                    //mis_number += 1;    //mis-prediction
                 }
-                
-
             
             }
             
             
-            else                //the TakenResult is 1(Taken)
+            else                //if the TakenResult is 1(Taken)
             {
                 if (saturating_counter[PredictIndex] == 0){
                     //00
                     saturating_counter[PredictIndex] = 1;
-                    mis_number += 1;    //mis-prediction
+                    //mis_number += 1;    //mis-prediction
                 }
                 
                 else if (saturating_counter[PredictIndex] == 1){
                     //01
                     saturating_counter[PredictIndex] = 3;
-                    mis_number += 1;    //mis-prediction
+                    //mis_number += 1;    //mis-prediction
                 }
                 
                 else if (saturating_counter[PredictIndex] == 2){
@@ -161,7 +150,7 @@ int main(){
     }
     else cout<< "Unable to open trace or traceout file ";
     
-    std::cout<<(double)mis_number/line_number;      //output the result of mis-prediction rate
+    //std::cout<<(double)mis_number/line_number;      //output the result of mis-prediction rate
     
     return 0;
 }
